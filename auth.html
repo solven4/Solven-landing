@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log In or Create Account | SOLVEN4</title>
+<meta name="description" content="Log in or create your SOLVEN4 account to access EDGE, FORGE, NEXUS and ORACLE from one secure login.">
+<meta name="robots" content="noindex, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --white:#FFFFFF;
+  --ink:#020202;
+  --ink-soft:#5B6270;
+  --line:#E7E8EC;
+  --dark:#03080F;
+  --dark-2:#0A121F;
+  --dark-card:#0F1A2B;
+  --dark-border:#1B2740;
+  --accent:#2F6FED;
+  --accent-bright:#5B9BFF;
+  --success:#0FAE7A;
+  --danger:#E5484D;
+  --pill:999px;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',Arial,sans-serif; color:#fff; background:var(--dark); overflow-x:hidden; min-height:100vh;}
+a{color:inherit; text-decoration:none;}
+button{font-family:inherit; cursor:pointer;}
+.icon{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round;}
+.mono{font-family:'JetBrains Mono',monospace;}
+
+.auth-page{position:relative; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 20px; overflow:hidden;}
+.auth-bg-grid{position:fixed; inset:0; z-index:0; pointer-events:none; background-image:linear-gradient(rgba(47,111,237,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(47,111,237,0.08) 1px, transparent 1px); background-size:44px 44px; mask-image:radial-gradient(ellipse at 50% 20%, black 0%, transparent 65%);}
+.auth-bg-glow{position:fixed; top:-20%; left:50%; transform:translateX(-50%); width:900px; height:900px; background:radial-gradient(circle, rgba(47,111,237,0.18), transparent 62%); pointer-events:none; z-index:0;}
+
+.auth-topbar{position:relative; z-index:2; width:100%; max-width:1100px; display:flex; align-items:center; justify-content:space-between; margin:0 auto 34px;}
+.auth-topbar .brand{display:flex; align-items:center; gap:10px;}
+.auth-topbar .brand-text{font-size:18px; font-weight:800; letter-spacing:-0.01em;}
+.auth-back-home{display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:#9AA7BD; transition:color .25s ease;}
+.auth-back-home:hover{color:#fff;}
+.auth-back-home svg{width:15px; height:15px; stroke:currentColor;}
+
+/* ---- animated divided-core logo (motion mark) ---- */
+.auth-core-wrap{position:relative; z-index:2; width:104px; height:104px; margin:0 auto 22px;}
+.auth-core-ring{position:absolute; inset:-16px; border-radius:50%; background:conic-gradient(from 0deg, rgba(91,155,255,0) 0%, rgba(91,155,255,.6) 30%, rgba(91,155,255,0) 55%, rgba(91,155,255,.4) 80%, rgba(91,155,255,0) 100%); filter:blur(1.5px); animation:authCoreSpin 7s linear infinite;}
+.auth-core-ring::after{content:''; position:absolute; inset:8px; border-radius:50%; background:var(--dark);}
+.auth-core-orbit{position:absolute; inset:-30px; border-radius:50%; border:1px dashed rgba(91,155,255,0.22); animation:authCoreSpin 22s linear infinite reverse;}
+.auth-core{position:absolute; inset:0; border-radius:50%; background:radial-gradient(circle at 32% 28%, #2a3542 0%, #0a0d12 55%, #000 100%); box-shadow:inset 0 1px 2px rgba(255,255,255,0.28), inset 0 -10px 18px rgba(0,0,0,0.4), 0 0 46px rgba(47,111,237,0.4); animation:authCoreFloat 4.5s ease-in-out infinite;}
+.auth-core span{position:absolute; background:var(--accent-bright); box-shadow:0 0 18px 3px rgba(91,155,255,0.9); animation:authCorePulse 2.6s ease-in-out infinite;}
+.auth-core span.v{left:47%; top:12%; width:6%; height:76%;}
+.auth-core span.h{top:47%; left:12%; height:6%; width:76%;}
+@keyframes authCoreSpin{from{transform:rotate(0deg);} to{transform:rotate(360deg);}}
+@keyframes authCorePulse{0%,100%{opacity:.65;} 50%{opacity:1;}}
+@keyframes authCoreFloat{0%,100%{transform:translateY(0);} 50%{transform:translateY(-5px);}}
+@media (prefers-reduced-motion: reduce){
+  .auth-core-ring, .auth-core-orbit, .auth-core, .auth-core span{animation:none;}
+}
+
+.auth-wordmark{position:relative; z-index:2; text-align:center; font-size:15px; font-weight:800; letter-spacing:0.04em; color:#fff; margin-bottom:34px;}
+.auth-wordmark span{color:var(--accent-bright);}
+
+/* ---- auth box (adapted from the site-wide modal component, now a standalone page block) ---- */
+.auth-shell{position:relative; z-index:2; width:100%; max-width:440px;}
+.auth-modal{position:relative; width:100%; border-radius:26px; padding:40px 36px; background:linear-gradient(160deg, rgba(20,28,42,0.98), rgba(10,16,27,0.99)); border:1px solid rgba(255,255,255,0.12); box-shadow:0 40px 100px rgba(0,0,0,0.5); animation:authPop .5s cubic-bezier(.2,.9,.25,1);}
+@keyframes authPop{from{opacity:0; transform:translateY(18px) scale(.97);} to{opacity:1; transform:translateY(0) scale(1);}}
+.auth-tabs{display:flex; gap:6px; background:rgba(255,255,255,0.04); border-radius:999px; padding:5px; margin-bottom:26px;}
+.auth-tab{flex:1; padding:10px; border-radius:999px; border:none; background:none; color:#9AA7BD; font-weight:700; font-size:13.5px; cursor:pointer; transition:all .25s ease;}
+.auth-tab.is-active{background:var(--accent); color:#fff;}
+.auth-view{display:none;}
+.auth-view.is-active{display:block; animation:authFade .35s ease;}
+@keyframes authFade{from{opacity:0; transform:translateX(10px);} to{opacity:1; transform:translateX(0);}}
+.auth-title{font-size:23px; font-weight:800; color:#fff;}
+.auth-subtitle{font-size:13.5px; color:#9AA7BD; margin-top:8px; line-height:1.6;}
+.auth-social{display:flex; flex-direction:column; gap:10px; margin-top:22px;}
+.auth-social-btn{display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.03); color:#E7ECF5; font-weight:700; font-size:13.5px; cursor:pointer; transition:all .25s ease;}
+.auth-social-btn:hover{border-color:rgba(255,255,255,0.3); background:rgba(255,255,255,0.06);}
+.auth-social-badge{width:18px; height:18px; border-radius:5px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex:none;}
+.auth-social-badge.google{background:#fff; color:#1a1a1a;}
+.auth-divider{display:flex; align-items:center; gap:12px; margin:22px 0; color:#5B6270; font-size:12px; font-weight:600;}
+.auth-divider::before, .auth-divider::after{content:''; flex:1; height:1px; background:rgba(255,255,255,0.1);}
+.auth-field{margin-top:14px;}
+.auth-label{display:block; font-size:12.5px; color:#9AA7BD; margin-bottom:6px; font-weight:600;}
+.auth-input{width:100%; padding:13px 16px; border-radius:12px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.04); color:#fff; font-size:14px; font-family:inherit;}
+.auth-input::placeholder{color:#5B6270;}
+.auth-input:focus{outline:none; border-color:rgba(91,155,255,0.55);}
+.auth-password-wrap{position:relative;}
+.auth-password-wrap .auth-input{padding-right:46px;}
+.auth-toggle-pw{position:absolute; right:6px; top:50%; transform:translateY(-50%); width:34px; height:34px; border:none; background:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#9AA7BD;}
+.auth-toggle-pw svg{width:17px; height:17px; stroke:currentColor;}
+.auth-row{display:flex; align-items:center; justify-content:space-between; margin-top:16px; font-size:12.5px;}
+.auth-remember{display:flex; align-items:center; gap:7px; color:#9AA7BD;}
+.auth-remember input{accent-color:var(--accent-bright);}
+.auth-link{color:var(--accent-bright); font-weight:700; text-decoration:none; cursor:pointer; background:none; border:none; font-size:inherit; font-family:inherit; padding:0;}
+.auth-error{color:#FF6B6B; font-size:12.5px; margin-top:10px; display:none;}
+.auth-submit{width:100%; margin-top:22px;}
+.auth-switch{text-align:center; margin-top:22px; font-size:13px; color:#9AA7BD;}
+.auth-terms{display:flex; align-items:flex-start; gap:9px; margin-top:16px; font-size:12px; color:#9AA7BD; line-height:1.6;}
+.auth-terms input{margin-top:3px; accent-color:var(--accent-bright);}
+.auth-back{display:inline-flex; align-items:center; gap:6px; color:#9AA7BD; font-size:12.5px; font-weight:700; background:none; border:none; cursor:pointer; padding:0; margin-bottom:18px;}
+.auth-back svg{width:13px; height:13px; stroke:#9AA7BD;}
+.auth-success-icon{width:60px; height:60px; border-radius:50%; background:radial-gradient(circle at 32% 26%, rgba(15,174,122,0.35), rgba(10,18,31,0.15) 70%); border:1px solid rgba(15,174,122,0.4); display:flex; align-items:center; justify-content:center; margin:0 auto 18px;}
+
+.btn{display:inline-flex; align-items:center; gap:8px; justify-content:center; border-radius:var(--pill); font-weight:600; font-size:15px; padding:13px 30px; border:1px solid transparent; transition:all .2s ease; white-space:nowrap;}
+.btn-primary{background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0)), var(--ink); color:var(--white);}
+.btn-primary:hover{background:linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0)), var(--accent);}
+.btn-ghost{background:transparent; border:1px solid var(--dark-border); color:#fff;}
+.btn-ghost:hover{border-color:var(--accent-bright); color:var(--accent-bright);}
+.glass-btn-3d.magnetic{position:relative; overflow:hidden; box-shadow:inset 0 1px 1px rgba(255,255,255,0.28), inset 0 -8px 14px rgba(0,0,0,0.32), 0 8px 18px rgba(0,0,0,0.22); transition:transform .45s var(--ease), box-shadow .45s var(--ease);}
+.glass-btn-3d.magnetic:hover{transform:translateY(-2px); box-shadow:inset 0 1px 1px rgba(255,255,255,0.32), inset 0 -8px 14px rgba(0,0,0,0.32), 0 12px 26px rgba(47,111,237,0.28);}
+.glass-btn-3d.magnetic:active{transform:translateY(0) scale(0.97);}
+
+.auth-footnote{position:relative; z-index:2; text-align:center; margin-top:28px; font-size:12px; color:#5B6270; max-width:440px; line-height:1.7;}
+.auth-footnote a{color:#9AA7BD; font-weight:600;}
+.auth-footnote a:hover{color:var(--accent-bright);}
+
+@media (max-width:480px){ .auth-modal{padding:32px 24px;} .auth-topbar{margin-bottom:24px;} }
+</style>
+</head>
+<body>
+
+<svg style="display:none">
+<symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-chev-left" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></symbol>
+</svg>
+
+<div class="auth-bg-grid"></div>
+<div class="auth-bg-glow"></div>
+
+<div class="auth-page">
+  <div class="auth-topbar">
+    <a href="index.html" class="brand">
+      <div style="width:28px; height:28px; border-radius:50%; position:relative; background:radial-gradient(circle at 32% 28%, #2a3542 0%, #0a0d12 55%, #000 100%);">
+        <span style="position:absolute; left:47%; top:10%; width:6%; height:80%; background:var(--accent-bright); box-shadow:0 0 5px 1px rgba(91,155,255,0.9);"></span>
+        <span style="position:absolute; top:47%; left:10%; height:6%; width:80%; background:var(--accent-bright); box-shadow:0 0 5px 1px rgba(91,155,255,0.9);"></span>
+      </div>
+      <span class="brand-text">SOLVEN<span style="color:var(--accent-bright);">4</span></span>
+    </a>
+    <a href="index.html" class="auth-back-home"><svg class="icon"><use href="#i-chev-left"/></svg>Back to site</a>
+  </div>
+
+  <div class="auth-core-wrap">
+    <div class="auth-core-orbit"></div>
+    <div class="auth-core-ring"></div>
+    <div class="auth-core">
+      <span class="v"></span>
+      <span class="h"></span>
+    </div>
+  </div>
+  <div class="auth-wordmark">SOLVEN<span>4</span> · ONE LOGIN, FOUR DIVISIONS</div>
+
+  <div class="auth-shell">
+    <div class="auth-modal" role="dialog" aria-labelledby="authTitle">
+
+      <div class="auth-tabs" id="authTabs">
+        <button type="button" class="auth-tab is-active" data-auth-tab="login">Log In</button>
+        <button type="button" class="auth-tab" data-auth-tab="signup">Create Account</button>
+      </div>
+
+      <!-- LOG IN -->
+      <div class="auth-view is-active" data-auth-view="login">
+        <div class="auth-title" id="authTitle">Welcome back.</div>
+        <p class="auth-subtitle">Log in to access EDGE, FORGE, NEXUS and ORACLE from one account.</p>
+
+        <div class="auth-social">
+          <button type="button" class="auth-social-btn" id="googleLoginBtn"><span class="auth-social-badge google">G</span>Continue with Google</button>
+          <button type="button" class="auth-social-btn"><span class="auth-social-badge">&#63743;</span>Continue with Apple</button>
+        </div>
+        <div class="auth-divider">or log in with email</div>
+
+        <form id="loginForm" novalidate>
+          <div class="auth-field">
+            <label class="auth-label" for="loginEmail">Email address</label>
+            <input class="auth-input" type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email">
+          </div>
+          <div class="auth-field">
+            <label class="auth-label" for="loginPassword">Password</label>
+            <div class="auth-password-wrap">
+              <input class="auth-input" type="password" id="loginPassword" placeholder="Enter your password" required autocomplete="current-password">
+              <button type="button" class="auth-toggle-pw" data-toggle-for="loginPassword" aria-label="Show password"><svg class="icon"><use href="#i-eye"/></svg></button>
+            </div>
+          </div>
+          <div class="auth-row">
+            <label class="auth-remember"><input type="checkbox">Remember me</label>
+            <button type="button" class="auth-link" data-auth-tab="forgot">Forgot password?</button>
+          </div>
+          <div class="auth-error" id="loginError">Please enter a valid email and password.</div>
+          <button type="submit" class="btn btn-primary glass-btn-3d magnetic auth-submit">Log In</button>
+        </form>
+        <div class="auth-switch">Don't have an account? <button type="button" class="auth-link" data-auth-tab="signup">Create one</button></div>
+      </div>
+
+      <!-- SIGN UP -->
+      <div class="auth-view" data-auth-view="signup">
+        <div class="auth-title">Create your account.</div>
+        <p class="auth-subtitle">One login for EDGE, FORGE, NEXUS and ORACLE — set up in under a minute.</p>
+
+        <div class="auth-social">
+          <button type="button" class="auth-social-btn" id="googleSignupBtn"><span class="auth-social-badge google">G</span>Sign up with Google</button>
+          <button type="button" class="auth-social-btn"><span class="auth-social-badge">&#63743;</span>Sign up with Apple</button>
+        </div>
+        <div class="auth-divider">or sign up with email</div>
+
+        <form id="signupForm" novalidate>
+          <div class="auth-field">
+            <label class="auth-label" for="signupName">Full name</label>
+            <input class="auth-input" type="text" id="signupName" placeholder="Your full name" required autocomplete="name">
+          </div>
+          <div class="auth-field">
+            <label class="auth-label" for="signupEmail">Email address</label>
+            <input class="auth-input" type="email" id="signupEmail" placeholder="you@example.com" required autocomplete="email">
+          </div>
+          <div class="auth-field">
+            <label class="auth-label" for="signupPassword">Password</label>
+            <div class="auth-password-wrap">
+              <input class="auth-input" type="password" id="signupPassword" placeholder="At least 8 characters" required minlength="8" autocomplete="new-password">
+              <button type="button" class="auth-toggle-pw" data-toggle-for="signupPassword" aria-label="Show password"><svg class="icon"><use href="#i-eye"/></svg></button>
+            </div>
+          </div>
+          <div class="auth-field">
+            <label class="auth-label" for="signupPassword2">Confirm password</label>
+            <div class="auth-password-wrap">
+              <input class="auth-input" type="password" id="signupPassword2" placeholder="Re-enter your password" required minlength="8" autocomplete="new-password">
+              <button type="button" class="auth-toggle-pw" data-toggle-for="signupPassword2" aria-label="Show password"><svg class="icon"><use href="#i-eye"/></svg></button>
+            </div>
+          </div>
+          <div class="auth-terms">
+            <input type="checkbox" id="signupTerms" required>
+            <label for="signupTerms">I agree to the <a href="solven4-terms-of-service.html" target="_blank" style="color:var(--accent-bright);">Terms of Service</a> and <a href="solven4-privacy-policy.html" target="_blank" style="color:var(--accent-bright);">Privacy Policy</a>.</label>
+          </div>
+          <div class="auth-error" id="signupError">Please complete all fields correctly and accept the terms.</div>
+          <button type="submit" class="btn btn-primary glass-btn-3d magnetic auth-submit">Create Account</button>
+        </form>
+        <div class="auth-switch">Already have an account? <button type="button" class="auth-link" data-auth-tab="login">Log in</button></div>
+      </div>
+
+      <!-- FORGOT PASSWORD -->
+      <div class="auth-view" data-auth-view="forgot">
+        <button type="button" class="auth-back" data-auth-tab="login"><svg class="icon"><use href="#i-chev-left"/></svg>Back to log in</button>
+        <div class="auth-title">Reset your password.</div>
+        <p class="auth-subtitle">Enter the email on your account and we'll send a link to reset your password.</p>
+        <form id="forgotForm" novalidate>
+          <div class="auth-field">
+            <label class="auth-label" for="forgotEmail">Email address</label>
+            <input class="auth-input" type="email" id="forgotEmail" placeholder="you@example.com" required autocomplete="email">
+          </div>
+          <div class="auth-error" id="forgotError">Please enter a valid email address.</div>
+          <button type="submit" class="btn btn-primary glass-btn-3d magnetic auth-submit">Send Reset Link</button>
+        </form>
+      </div>
+
+      <!-- SUCCESS -->
+      <div class="auth-view" data-auth-view="success">
+        <div class="auth-success-icon"><svg class="icon" style="width:26px; height:26px; stroke:#0FAE7A;"><use href="#i-check"/></svg></div>
+        <div class="auth-title" style="text-align:center;" id="authSuccessTitle">You're all set.</div>
+        <p class="auth-subtitle" style="text-align:center;" id="authSuccessMessage">This is a preview environment, so no real account was created — but the flow works exactly as it will once connected to SOLVEN4's live platform.</p>
+        <a href="index.html" class="btn btn-ghost magnetic auth-submit" style="text-decoration:none;">Return to SOLVEN4</a>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="auth-footnote">By continuing you agree to SOLVEN4's <a href="solven4-terms-of-service.html">Terms of Service</a> and <a href="solven4-privacy-policy.html">Privacy Policy</a>. Need help? Visit the <a href="solven4-help-center.html">Help Center</a>.</p>
+</div>
+
+<script>
+(function(){
+  const shell = document.querySelector('.auth-shell');
+  const views = Array.from(shell.querySelectorAll('.auth-view'));
+  const tabs = Array.from(shell.querySelectorAll('.auth-tab'));
+
+  function setView(name){
+    views.forEach(v => v.classList.toggle('is-active', v.dataset.authView === name));
+    tabs.forEach(t => t.classList.toggle('is-active', t.dataset.authTab === name));
+    const firstInput = shell.querySelector('.auth-view.is-active input');
+    if(firstInput) setTimeout(()=> firstInput.focus(), 50);
+    const url = new URL(window.location);
+    url.searchParams.set('mode', name === 'success' ? (url.searchParams.get('mode') || 'login') : name);
+    window.history.replaceState({}, '', url);
+  }
+
+  // open on the tab requested via ?mode=login|signup|forgot
+  const params = new URLSearchParams(window.location.search);
+  const initial = params.get('mode');
+  setView(initial === 'signup' ? 'signup' : (initial === 'forgot' ? 'forgot' : 'login'));
+
+  shell.querySelectorAll('[data-auth-tab]').forEach(el=>{
+    el.addEventListener('click', ()=> setView(el.dataset.authTab));
+  });
+
+  shell.querySelectorAll('.auth-toggle-pw').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const input = document.getElementById(btn.dataset.toggleFor);
+      if(!input) return;
+      const showing = input.type === 'text';
+      input.type = showing ? 'password' : 'text';
+      btn.innerHTML = showing
+        ? '<svg class="icon"><use href="#i-eye"/></svg>'
+        : '<svg class="icon"><use href="#i-eye-off"/></svg>';
+    });
+  });
+
+  function showSuccess(title, message){
+    document.getElementById('authSuccessTitle').textContent = title;
+    document.getElementById('authSuccessMessage').textContent = message;
+    setView('success');
+  }
+
+  document.getElementById('loginForm').addEventListener('submit', e=>{
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const pw = document.getElementById('loginPassword').value;
+    const err = document.getElementById('loginError');
+    const ok = /\S+@\S+\.\S+/.test(email) && pw.length >= 1;
+    err.style.display = ok ? 'none' : 'block';
+    if(!ok) return;
+    showSuccess('Welcome back.', 'This is a preview environment, so no real session was created — but the log-in flow works exactly as it will once connected to SOLVEN4\'s live platform.');
+  });
+
+  document.getElementById('signupForm').addEventListener('submit', e=>{
+    e.preventDefault();
+    const name = document.getElementById('signupName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const pw = document.getElementById('signupPassword').value;
+    const pw2 = document.getElementById('signupPassword2').value;
+    const terms = document.getElementById('signupTerms').checked;
+    const err = document.getElementById('signupError');
+    const ok = name.length > 1 && /\S+@\S+\.\S+/.test(email) && pw.length >= 8 && pw === pw2 && terms;
+    err.style.display = ok ? 'none' : 'block';
+    if(!ok) return;
+    showSuccess('You\'re all set, ' + name.split(' ')[0] + '.', 'This is a preview environment, so no real account was created — but the sign-up flow works exactly as it will once connected to SOLVEN4\'s live platform.');
+  });
+
+  document.getElementById('forgotForm').addEventListener('submit', e=>{
+    e.preventDefault();
+    const email = document.getElementById('forgotEmail').value.trim();
+    const err = document.getElementById('forgotError');
+    const ok = /\S+@\S+\.\S+/.test(email);
+    err.style.display = ok ? 'none' : 'block';
+    if(!ok) return;
+    showSuccess('Check your email.', 'If an account exists for that address, a reset link would be sent — no real email was sent in this preview environment.');
+  });
+
+  // Google continue buttons: preview-only stand-in for real OAuth
+  ['googleLoginBtn','googleSignupBtn'].forEach(id=>{
+    const btn = document.getElementById(id);
+    if(btn) btn.addEventListener('click', ()=> showSuccess('Continuing with Google.', 'This is a preview environment, so no real Google session was created — once connected to SOLVEN4\'s live platform this will complete Google Sign-In.'));
+  });
+})();
+</script>
+
+</body>
+</html>
