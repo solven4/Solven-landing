@@ -251,6 +251,7 @@ h2.h-title{font-size:38px; font-weight:800; letter-spacing:-0.01em; max-width:64
 #siteHeader #hamburger{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.2); color:#fff;}
 #siteHeader #hamburger:hover{background:rgba(255,255,255,0.14);}
 </style>
+<link rel="stylesheet" href="responsive.css">
 </head>
 <body>
 <svg style="display:none">
@@ -342,7 +343,7 @@ h2.h-title{font-size:38px; font-weight:800; letter-spacing:-0.01em; max-width:64
 @media (prefers-reduced-motion: reduce){ #hero .hero-video-bg{display:none;} }
 </style>
 <section id="hero">
-  <video class="hero-video-bg" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+  <video id="heroVideo" class="hero-video-bg" autoplay muted loop playsinline webkit-playsinline="true" disablepictureinpicture preload="auto" aria-hidden="true">
     <source src="SOLVEN4_BRAND/03_Marketing_Assets/04_Brand_Film_Motion/Fluid_match_cut_transition._The_202607050930.mp4" type="video/mp4">
   </video>
   <div class="hero-video-overlay"></div>
@@ -1013,6 +1014,26 @@ h2.h-title{font-size:38px; font-weight:800; letter-spacing:-0.01em; max-width:64
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script>
 gsap.registerPlugin(ScrollTrigger);
+
+// ---- hero background video: force it to keep playing. Muted+playsinline+autoplay covers
+// nearly every browser, but some mobile browsers (iOS Low Power Mode, background-tab restores)
+// still block or pause it — retry play() on load and on the first touch/visibility change so
+// it never needs a visible play button. ----
+(function(){
+  const v = document.getElementById('heroVideo');
+  if(!v) return;
+  v.muted = true;
+  v.defaultMuted = true;
+  const tryPlay = ()=> { const p = v.play(); if(p && p.catch) p.catch(()=>{}); };
+  tryPlay();
+  v.addEventListener('loadedmetadata', tryPlay);
+  v.addEventListener('canplay', tryPlay);
+  v.addEventListener('pause', tryPlay);
+  document.addEventListener('visibilitychange', ()=> { if(!document.hidden) tryPlay(); });
+  ['touchstart','click','scroll'].forEach(evt=>{
+    document.addEventListener(evt, tryPlay, { once: true, passive: true });
+  });
+})();
 
 // ---- remaining bare href="#" placeholder links (not yet wired to a real destination) used to
 // jump-scroll the page to the very top on click, which read as a broken link. Block that default jump. ----
