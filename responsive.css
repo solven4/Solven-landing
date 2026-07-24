@@ -9,15 +9,41 @@
 html, body { max-width: 100vw; overflow-x: hidden; }
 img, video { max-width: 100%; }
 
+/* ---------- header contrast fix (all breakpoints) ----------
+   115 of 117 pages use a white/light header background, but many of those
+   pages also set a dark theme on <body> for the rest of the page's content,
+   which the header's logo text and hamburger icon (both colorless, relying
+   on inheritance) picked up — making them invisible white-on-white. Nav
+   links already set their own explicit color and are unaffected. Index.html
+   and auth.html use a dark header with its own explicit white text/icon
+   colors (higher specificity), so they're unaffected by this rule. ---------- */
+#siteHeader { color: var(--ink); }
+
+/* ---------- header "Launch App" button becomes an icon-only circular button ----------
+   The label is a raw text node (not wrapped in a span), so it's hidden by zeroing the
+   anchor's own font-size; the svg icon keeps its explicit pixel width/height and stays
+   visible. Scoped to `#siteHeader a.btn` specifically so the same link elsewhere on the
+   page (hero CTA, pricing, footer) is unaffected. ---------- */
+#siteHeader a.btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 42px !important;
+  height: 42px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  gap: 0 !important;
+  font-size: 0 !important;
+}
+#siteHeader a.btn svg { width: 18px !important; height: 18px !important; margin: 0 !important; flex: none; }
+
 /* ---------- ~tablet and down ---------- */
 @media (max-width: 900px) {
   .wrap { padding: 0 24px !important; }
   section { padding: 64px 0 !important; }
 
   #siteHeader { padding: 12px 18px !important; }
-  #siteHeader .btn,
-  #siteHeader a.btn { padding: 8px 14px !important; font-size: 12.5px !important; gap: 6px !important; }
-  #siteHeader .btn svg { width: 13px !important; height: 13px !important; }
+  #siteHeader a.btn { width: 38px !important; height: 38px !important; }
   #siteHeader > a span { font-size: 15px !important; }
   #siteHeader > a > div { width: 28px !important; height: 28px !important; }
   #hamburger { width: 36px !important; height: 36px !important; }
@@ -98,7 +124,5 @@ img, video { max-width: 100%; }
   h1#heroHeadline { font-size: 31px !important; }
   h2.h-title { font-size: 22px !important; }
   #siteHeader { padding: 10px 14px !important; }
-  #siteHeader .btn { padding: 7px 10px !important; font-size: 11.5px !important; }
-  #siteHeader .btn svg { display: none; }
   .btn { padding: 10px 16px !important; }
 }
