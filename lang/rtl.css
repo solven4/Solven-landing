@@ -1,0 +1,64 @@
+/* ============================================================
+   SOLVEN4 — RTL layout overrides, active only when <html dir="rtl">
+   (i.e. Arabic mode is on). Loaded on every page, after responsive.css,
+   so it wins the cascade the same way responsive.css does: targeted
+   !important rules against inline style="" attributes.
+   ============================================================ */
+
+html[dir="rtl"] body { font-family: 'Tajawal', 'Inter', Arial, sans-serif; }
+html[dir="rtl"] .mono { font-family: 'JetBrains Mono', 'Tajawal', monospace; }
+
+/* generic text alignment + flips */
+html[dir="rtl"] { text-align: right; }
+html[dir="rtl"] .lede,
+html[dir="rtl"] p { text-align: right; }
+html[dir="rtl"] [style*="text-align:center"],
+html[dir="rtl"] [style*="text-align: center"] { text-align: center !important; }
+
+/* header */
+html[dir="rtl"] #siteHeader { direction: rtl; }
+html[dir="rtl"] #siteHeader nav { direction: rtl; }
+html[dir="rtl"] #siteHeader > a { flex-direction: row-reverse; }
+html[dir="rtl"] .breadcrumb { direction: rtl; flex-direction: row-reverse; justify-content: flex-end; }
+html[dir="rtl"] .breadcrumb svg { transform: scaleX(-1); }
+
+/* buttons with a leading icon read more naturally icon-after-text in Arabic */
+html[dir="rtl"] .btn { flex-direction: row-reverse; }
+html[dir="rtl"] .division-card-cta,
+html[dir="rtl"] .feature-card-cta,
+html[dir="rtl"] .foundation-card-cta,
+html[dir="rtl"] .door-step,
+html[dir="rtl"] .door-feature,
+html[dir="rtl"] .auth-back,
+html[dir="rtl"] .auth-remember { flex-direction: row-reverse; }
+html[dir="rtl"] .icon[style*="i-chev-right"],
+html[dir="rtl"] use[href="#i-chev-right"] { transform: scaleX(-1); }
+html[dir="rtl"] use[href="#i-chev-left"] { transform: scaleX(-1); }
+
+/* mobile menu / drawers */
+html[dir="rtl"] #mobileMenu { direction: rtl; text-align: right; }
+html[dir="rtl"] .auth-tabs,
+html[dir="rtl"] .auth-row,
+html[dir="rtl"] .auth-terms,
+html[dir="rtl"] .auth-social-btn { direction: rtl; }
+html[dir="rtl"] .auth-password-wrap .auth-input { padding-right: 16px !important; padding-left: 46px !important; }
+html[dir="rtl"] .auth-toggle-pw { right: auto !important; left: 6px !important; }
+
+/* footer */
+html[dir="rtl"] footer[class*="section-dark"] { direction: rtl; }
+
+/* language toggle button */
+.lang-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 40px; height: 40px; padding: 0 10px; border-radius: 999px;
+  font-weight: 800; font-size: 12.5px; letter-spacing: 0.02em; cursor: pointer;
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.2);
+  color: inherit; transition: background .2s ease;
+}
+.lang-toggle:hover { background: rgba(255,255,255,0.14); }
+#siteHeader .lang-toggle { color: var(--ink); border-color: var(--line); background: rgba(2,2,2,0.04); }
+#siteHeader .lang-toggle:hover { background: rgba(2,2,2,0.08); }
+
+@media (max-width: 900px) {
+  .lang-toggle { min-width: 34px; height: 34px; font-size: 11.5px; padding: 0 8px; }
+}

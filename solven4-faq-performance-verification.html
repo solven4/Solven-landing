@@ -123,6 +123,9 @@ h1.h-title{font-size:38px; font-weight:800; letter-spacing:-0.01em; max-width:70
 .answer-card{background:linear-gradient(160deg, rgba(47,111,237,0.1), rgba(255,255,255,0.02)); border:1px solid rgba(91,155,255,0.25); border-radius:20px; padding:28px; margin-bottom:36px;}
 </style>
 <link rel="stylesheet" href="responsive.css">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lang/rtl.css">
+
 </head>
 <body class="section-dark" style="background:var(--dark);">
 <svg style="display:none">
@@ -342,5 +345,7 @@ document.getElementById('cookieAccept').addEventListener('click', ()=>{ localSto
 document.getElementById('cookieReject').addEventListener('click', ()=>{ localStorage.setItem('s4_cookie_choice','rejected'); document.getElementById('cookieBanner').style.display='none'; });
 </script>
 
+<script src="lang/dictionary.js"></script>
+<script src="lang/i18n.js"></script>
 </body>
 </html>
