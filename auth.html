@@ -311,23 +311,14 @@ button{font-family:inherit; cursor:pointer;}
   <p class="auth-footnote">By continuing you agree to SOLVEN4's <a href="solven4-terms-of-service.html">Terms of Service</a> and <a href="solven4-privacy-policy.html">Privacy Policy</a>. Need help? Visit the <a href="solven4-help-center.html">Help Center</a>.</p>
 </div>
 
-<!-- Clerk handles real Google/Apple OAuth + email-code verification client-side —
-     no backend needed for a static site. Swap in the real key from the Clerk
-     dashboard (API Keys → Publishable key) before this goes live.
-     Loaded straight from this instance's own Frontend API domain (decoded from
-     the publishable key) with data-clerk-publishable-key, which is Clerk's
-     documented plain-<script>-tag integration — it exposes a ready-made
-     `window.Clerk` singleton you call `.load()` on, not a constructor you `new`. -->
-<script
-  async
-  crossorigin="anonymous"
-  data-clerk-publishable-key="pk_test_bGl2ZS1rb2FsYS01NS5jbGVyay5hY2NvdW50cy5kZXYk"
-  src="https://live-koala-55.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
-  type="text/javascript"
-></script>
+<!-- Supabase Auth handles real Google/Apple OAuth + email-code verification
+     client-side — no backend needed for a static site. Swap in the real
+     project URL + anon key from Project Settings → API before this goes live. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
-  const CLERK_PUBLISHABLE_KEY = 'pk_test_bGl2ZS1rb2FsYS01NS5jbGVyay5hY2NvdW50cy5kZXYk';
+  const SUPABASE_URL = 'https://REPLACE.supabase.co';
+  const SUPABASE_ANON_KEY = 'REPLACE_WITH_ANON_PUBLIC_KEY';
 
   const shell = document.querySelector('.auth-shell');
   const views = Array.from(shell.querySelectorAll('.auth-view'));
@@ -370,8 +361,8 @@ button{font-family:inherit; cursor:pointer;}
     setView('success');
   }
 
-  function clerkErrorMessage(err, fallback){
-    return (err && err.errors && err.errors[0] && (err.errors[0].longMessage || err.errors[0].message)) || fallback;
+  function supabaseErrorMessage(err, fallback){
+    return (err && err.message) || fallback;
   }
 
   function showFieldError(id, message){
@@ -381,58 +372,40 @@ button{font-family:inherit; cursor:pointer;}
   }
   function hideFieldError(id){ document.getElementById(id).style.display = 'none'; }
 
-  // ---- Clerk setup ----
-  let clerk = null;
-  let clerkReady = false;
-  let pendingSignUp = null;   // in-flight SignUp resource, used by the verify-code step
-  let pendingSignIn = null;   // in-flight SignIn resource, used by the reset-password step
-  let verifyMode = 'signup';  // 'signup' | (reserved for future re-verification flows)
+  // ---- Supabase setup ----
+  let sb = null;
+  let sbReady = false;
+  let pendingSignupEmail = null;  // email awaiting its sign-up verification code
+  let pendingResetEmail = null;   // email awaiting its password-reset verification code
 
   function notConfigured(){
-    return !CLERK_PUBLISHABLE_KEY || CLERK_PUBLISHABLE_KEY.indexOf('REPLACE') !== -1;
+    return !SUPABASE_URL || SUPABASE_URL.indexOf('REPLACE') !== -1
+      || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.indexOf('REPLACE') !== -1;
   }
 
-  // the Clerk <script> tag loads async, so window.Clerk may not exist the instant
-  // this script runs — poll briefly for it instead of assuming it's already there.
-  function waitForClerkGlobal(timeoutMs){
-    return new Promise(resolve=>{
-      const start = Date.now();
-      (function check(){
-        if(window.Clerk) return resolve(true);
-        if(Date.now() - start > timeoutMs) return resolve(false);
-        setTimeout(check, 100);
-      })();
-    });
-  }
-
-  async function initClerk(){
-    if(notConfigured()){
-      console.warn('SOLVEN4 auth: Clerk publishable key not configured yet — sign-in/sign-up is disabled until it is.');
-      return;
-    }
-    const arrived = await waitForClerkGlobal(10000);
-    if(!arrived){
-      console.error('SOLVEN4 auth: Clerk script never loaded (network/CDN issue) — sign-in/sign-up is disabled.');
+  async function initSupabase(){
+    if(notConfigured() || !window.supabase){
+      console.warn('SOLVEN4 auth: Supabase URL/anon key not configured yet — sign-in/sign-up is disabled until it is.');
       return;
     }
     try{
-      clerk = window.Clerk; // pre-built singleton from the data-clerk-publishable-key script tag — not a constructor
-      await clerk.load();
-      clerkReady = true;
-      if(clerk.user){
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      sbReady = true;
+      const { data: { session } } = await sb.auth.getSession();
+      if(session){
         // already signed in (e.g. returning here after a completed OAuth redirect)
         window.location.replace('index.html');
       }
     }catch(err){
-      console.error('SOLVEN4 auth: Clerk failed to load.', err);
+      console.error('SOLVEN4 auth: Supabase failed to initialize.', err);
     }
   }
-  const clerkInit = initClerk();
+  const sbInit = initSupabase();
 
-  async function ensureClerk(errorFieldId){
-    if(clerkReady) return true;
-    await clerkInit;
-    if(clerkReady) return true;
+  async function ensureSupabase(errorFieldId){
+    if(sbReady) return true;
+    await sbInit;
+    if(sbReady) return true;
     showFieldError(errorFieldId, 'Sign-in is temporarily unavailable — please try again shortly.');
     return false;
   }
@@ -445,18 +418,14 @@ button{font-family:inherit; cursor:pointer;}
     const localOk = /\S+@\S+\.\S+/.test(email) && pw.length >= 1;
     if(!localOk){ showFieldError('loginError', 'Please enter a valid email and password.'); return; }
     hideFieldError('loginError');
-    if(!(await ensureClerk('loginError'))) return;
+    if(!(await ensureSupabase('loginError'))) return;
     try{
-      const result = await clerk.client.signIn.create({ identifier: email, password: pw });
-      if(result.status === 'complete'){
-        await clerk.setActive({ session: result.createdSessionId });
-        showSuccess('Welcome back.', 'Redirecting you into SOLVEN4…');
-        setTimeout(()=> window.location.href = 'index.html', 1100);
-      } else {
-        showFieldError('loginError', 'Additional verification is required to finish logging in.');
-      }
+      const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+      if(error) throw error;
+      showSuccess('Welcome back.', 'Redirecting you into SOLVEN4…');
+      setTimeout(()=> window.location.href = 'index.html', 1100);
     }catch(err){
-      showFieldError('loginError', clerkErrorMessage(err, 'That email and password don\'t match an account.'));
+      showFieldError('loginError', supabaseErrorMessage(err, 'That email and password don\'t match an account.'));
     }
   });
 
@@ -471,22 +440,26 @@ button{font-family:inherit; cursor:pointer;}
     const localOk = name.length > 1 && /\S+@\S+\.\S+/.test(email) && pw.length >= 8 && pw === pw2 && terms;
     if(!localOk){ showFieldError('signupError', 'Please complete all fields correctly and accept the terms.'); return; }
     hideFieldError('signupError');
-    if(!(await ensureClerk('signupError'))) return;
+    if(!(await ensureSupabase('signupError'))) return;
     try{
-      const nameParts = name.split(' ');
-      pendingSignUp = await clerk.client.signUp.create({
-        emailAddress: email,
+      const { data, error } = await sb.auth.signUp({
+        email,
         password: pw,
-        firstName: nameParts[0],
-        lastName: nameParts.slice(1).join(' ') || undefined
+        options: { data: { full_name: name } }
       });
-      await pendingSignUp.prepareEmailAddressVerification({ strategy: 'email_code' });
-      verifyMode = 'signup';
+      if(error) throw error;
+      if(data.session){
+        // project has "confirm email" turned off — already signed in, no code needed
+        showSuccess('You\'re all set, ' + name.split(' ')[0] + '.', 'Your SOLVEN4 account is ready — redirecting you now.');
+        setTimeout(()=> window.location.href = 'index.html', 1200);
+        return;
+      }
+      pendingSignupEmail = email;
       document.getElementById('verifySubtitle').textContent = 'Enter the 6-digit code we just sent to ' + email + '.';
       hideFieldError('verifyError');
       setView('verify');
     }catch(err){
-      showFieldError('signupError', clerkErrorMessage(err, 'Couldn\'t create that account — please check your details and try again.'));
+      showFieldError('signupError', supabaseErrorMessage(err, 'Couldn\'t create that account — please check your details and try again.'));
     }
   });
 
@@ -494,28 +467,25 @@ button{font-family:inherit; cursor:pointer;}
   document.getElementById('verifyForm').addEventListener('submit', async e=>{
     e.preventDefault();
     const code = document.getElementById('verifyCode').value.trim();
-    if(!clerkReady || !pendingSignUp){ showFieldError('verifyError', 'Session expired — please sign up again.'); return; }
+    if(!sbReady || !pendingSignupEmail){ showFieldError('verifyError', 'Session expired — please sign up again.'); return; }
     try{
-      const result = await pendingSignUp.attemptEmailAddressVerification({ code });
-      if(result.status === 'complete'){
-        await clerk.setActive({ session: result.createdSessionId });
-        showSuccess('You\'re all set.', 'Your SOLVEN4 account is ready — redirecting you now.');
-        setTimeout(()=> window.location.href = 'index.html', 1200);
-      } else {
-        showFieldError('verifyError', 'That code isn\'t right. Check your email and try again.');
-      }
+      const { error } = await sb.auth.verifyOtp({ email: pendingSignupEmail, token: code, type: 'signup' });
+      if(error) throw error;
+      showSuccess('You\'re all set.', 'Your SOLVEN4 account is ready — redirecting you now.');
+      setTimeout(()=> window.location.href = 'index.html', 1200);
     }catch(err){
-      showFieldError('verifyError', clerkErrorMessage(err, 'That code isn\'t right. Check your email and try again.'));
+      showFieldError('verifyError', supabaseErrorMessage(err, 'That code isn\'t right. Check your email and try again.'));
     }
   });
 
   document.getElementById('resendCodeBtn').addEventListener('click', async ()=>{
-    if(!clerkReady) return;
+    if(!sbReady || !pendingSignupEmail) return;
     try{
-      if(verifyMode === 'signup' && pendingSignUp) await pendingSignUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+      const { error } = await sb.auth.resend({ type: 'signup', email: pendingSignupEmail });
+      if(error) throw error;
       hideFieldError('verifyError');
     }catch(err){
-      showFieldError('verifyError', clerkErrorMessage(err, 'Couldn\'t resend the code — please try again.'));
+      showFieldError('verifyError', supabaseErrorMessage(err, 'Couldn\'t resend the code — please try again.'));
     }
   });
 
@@ -525,13 +495,15 @@ button{font-family:inherit; cursor:pointer;}
     const email = document.getElementById('forgotEmail').value.trim();
     if(!/\S+@\S+\.\S+/.test(email)){ showFieldError('forgotError', 'Please enter a valid email address.'); return; }
     hideFieldError('forgotError');
-    if(!(await ensureClerk('forgotError'))) return;
+    if(!(await ensureSupabase('forgotError'))) return;
     try{
-      pendingSignIn = await clerk.client.signIn.create({ strategy: 'reset_password_email_code', identifier: email });
+      const { error } = await sb.auth.resetPasswordForEmail(email);
+      if(error) throw error;
+      pendingResetEmail = email;
       hideFieldError('resetError');
       setView('reset');
     }catch(err){
-      showFieldError('forgotError', clerkErrorMessage(err, 'Couldn\'t find an account with that email.'));
+      showFieldError('forgotError', supabaseErrorMessage(err, 'Couldn\'t find an account with that email.'));
     }
   });
 
@@ -539,39 +511,37 @@ button{font-family:inherit; cursor:pointer;}
     e.preventDefault();
     const code = document.getElementById('resetCode').value.trim();
     const newPw = document.getElementById('resetPassword').value;
-    if(!clerkReady || !pendingSignIn){ showFieldError('resetError', 'Session expired — please request a new code.'); return; }
+    if(!sbReady || !pendingResetEmail){ showFieldError('resetError', 'Session expired — please request a new code.'); return; }
     if(newPw.length < 8){ showFieldError('resetError', 'Password must be at least 8 characters.'); return; }
     try{
-      const result = await pendingSignIn.attemptFirstFactor({ strategy: 'reset_password_email_code', code, password: newPw });
-      if(result.status === 'complete'){
-        await clerk.setActive({ session: result.createdSessionId });
-        showSuccess('Password updated.', 'You\'re logged in — redirecting you now.');
-        setTimeout(()=> window.location.href = 'index.html', 1200);
-      } else {
-        showFieldError('resetError', 'Please check the code and password, then try again.');
-      }
+      const { error: verifyError } = await sb.auth.verifyOtp({ email: pendingResetEmail, token: code, type: 'recovery' });
+      if(verifyError) throw verifyError;
+      const { error: updateError } = await sb.auth.updateUser({ password: newPw });
+      if(updateError) throw updateError;
+      showSuccess('Password updated.', 'You\'re logged in — redirecting you now.');
+      setTimeout(()=> window.location.href = 'index.html', 1200);
     }catch(err){
-      showFieldError('resetError', clerkErrorMessage(err, 'Please check the code and password, then try again.'));
+      showFieldError('resetError', supabaseErrorMessage(err, 'Please check the code and password, then try again.'));
     }
   });
 
   // ---- Google / Apple OAuth ----
-  async function oauthRedirect(strategy, errorFieldId){
-    if(!(await ensureClerk(errorFieldId))) return;
+  async function oauthRedirect(provider, errorFieldId){
+    if(!(await ensureSupabase(errorFieldId))) return;
     try{
-      await clerk.client.signIn.authenticateWithRedirect({
-        strategy,
-        redirectUrl: window.location.origin + '/auth.html',
-        redirectUrlComplete: window.location.origin + '/index.html'
+      const { error } = await sb.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: window.location.origin + '/auth.html' }
       });
+      if(error) throw error;
     }catch(err){
-      showFieldError(errorFieldId, clerkErrorMessage(err, 'That sign-in method is unavailable right now.'));
+      showFieldError(errorFieldId, supabaseErrorMessage(err, 'That sign-in method is unavailable right now.'));
     }
   }
-  document.getElementById('googleLoginBtn').addEventListener('click', ()=> oauthRedirect('oauth_google', 'loginError'));
-  document.getElementById('googleSignupBtn').addEventListener('click', ()=> oauthRedirect('oauth_google', 'signupError'));
-  document.getElementById('appleLoginBtn').addEventListener('click', ()=> oauthRedirect('oauth_apple', 'loginError'));
-  document.getElementById('appleSignupBtn').addEventListener('click', ()=> oauthRedirect('oauth_apple', 'signupError'));
+  document.getElementById('googleLoginBtn').addEventListener('click', ()=> oauthRedirect('google', 'loginError'));
+  document.getElementById('googleSignupBtn').addEventListener('click', ()=> oauthRedirect('google', 'signupError'));
+  document.getElementById('appleLoginBtn').addEventListener('click', ()=> oauthRedirect('apple', 'loginError'));
+  document.getElementById('appleSignupBtn').addEventListener('click', ()=> oauthRedirect('apple', 'signupError'));
 })();
 </script>
 
