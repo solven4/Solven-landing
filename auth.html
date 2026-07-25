@@ -426,8 +426,19 @@ button{font-family:inherit; cursor:pointer;}
 
       const { data: { session } } = await sb.auth.getSession();
       if(session){
-        // already signed in (e.g. returning here after a completed OAuth redirect)
-        goToHub(session);
+        // getSession() only reads local storage — it can't tell a genuinely
+        // live session from one that was revoked elsewhere (e.g. signing out
+        // on HUB revokes it server-side, but this tab's cached copy has no
+        // way to know). getUser() actually asks the server. Trusting the
+        // stale copy here was sending dead tokens to HUB, which rejected
+        // them and bounced back here, which sent the same dead tokens again —
+        // an infinite loop. Verify before forwarding; drop it locally if dead.
+        const { data: { user } } = await sb.auth.getUser();
+        if(user){
+          goToHub(session);
+        } else {
+          await sb.auth.signOut();
+        }
       }
     }catch(err){
       console.error('SOLVEN4 auth: Supabase failed to initialize.', err);
