@@ -10,7 +10,11 @@
    ============================================================ */
 (function () {
   var DICT = window.SOLVEN4_DICT || { common: {}, pages: {} };
-  var pageKey = location.pathname.split('/').pop() || 'index.html';
+  // vercel.json sets cleanUrls:true, so in production location.pathname has no ".html"
+  // (e.g. "/solven4-edge.html" -> "/solven4-edge") even though every dictionary.pages key
+  // is written with the extension — normalize so the lookup works in both environments.
+  var rawKey = location.pathname.split('/').pop() || '';
+  var pageKey = rawKey === '' ? 'index.html' : (rawKey.endsWith('.html') ? rawKey : rawKey + '.html');
   var pageDict = DICT.pages[pageKey] || {};
   var STORAGE_KEY = 'solven4_lang';
 
