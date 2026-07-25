@@ -391,6 +391,19 @@ button{font-family:inherit; cursor:pointer;}
     try{
       sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       sbReady = true;
+
+      // returning from a clicked email link (signup confirmation or password
+      // reset) arrives as ?code=... and needs one explicit exchange — plain
+      // OAuth redirects and an already-open session are handled by getSession().
+      const codeParam = new URLSearchParams(window.location.search).get('code');
+      if(codeParam){
+        const { error } = await sb.auth.exchangeCodeForSession(window.location.href);
+        if(!error){
+          window.location.replace('index.html');
+          return;
+        }
+      }
+
       const { data: { session } } = await sb.auth.getSession();
       if(session){
         // already signed in (e.g. returning here after a completed OAuth redirect)
@@ -445,7 +458,13 @@ button{font-family:inherit; cursor:pointer;}
       const { data, error } = await sb.auth.signUp({
         email,
         password: pw,
-        options: { data: { full_name: name } }
+        options: {
+          data: { full_name: name },
+          // this project's default Auth redirect points at an unrelated app
+          // (solven4-cockpit) — force the confirmation link back to this site
+          // regardless of that dashboard setting.
+          emailRedirectTo: window.location.origin + '/auth.html'
+        }
       });
       if(error) throw error;
       if(data.session){
@@ -497,7 +516,9 @@ button{font-family:inherit; cursor:pointer;}
     hideFieldError('forgotError');
     if(!(await ensureSupabase('forgotError'))) return;
     try{
-      const { error } = await sb.auth.resetPasswordForEmail(email);
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/auth.html'
+      });
       if(error) throw error;
       pendingResetEmail = email;
       hideFieldError('resetError');
