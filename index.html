@@ -687,50 +687,58 @@ h2.h-title{font-size:38px; font-weight:800; letter-spacing:-0.01em; max-width:64
      markup/CSS/SVG paths and copy — no external component or library. -->
 <style>
 .s4-why-row{display:flex; gap:20px; height:29rem; margin-top:50px; perspective:1400px;}
-.s4-why-card{position:relative; overflow:hidden; flex:1 1 0%; display:flex; flex-direction:column; padding:28px; border-radius:var(--card); background:linear-gradient(160deg, #101c30, #03080F 78%); border:1px solid var(--dark-border); transition:flex .8s var(--ease), border-color .4s ease, transform .3s ease; color:#fff; cursor:pointer; transform-style:preserve-3d; will-change:transform;}
-.s4-why-card:hover, .s4-why-card.is-active{flex:2.2 1 auto; border-color:rgba(91,155,255,0.35);}
-.s4-why-index{position:relative; z-index:2; font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:0.08em; color:var(--accent-bright); opacity:0; transition:opacity .4s ease; align-self:flex-end;}
+.s4-why-card{position:relative; overflow:hidden; flex:1 1 0%; display:flex; flex-direction:column; padding:30px; border-radius:var(--card); background:linear-gradient(160deg, #121f36, #03080F 78%); border:1px solid var(--dark-border); transition:flex .8s var(--ease), border-color .4s ease, transform .3s ease, box-shadow .4s ease; color:#fff; cursor:pointer; transform-style:preserve-3d; will-change:transform;}
+.s4-why-card:hover, .s4-why-card.is-active{flex:2.2 1 auto; border-color:rgba(91,155,255,0.4); box-shadow:0 24px 60px rgba(3,8,15,0.5), 0 0 0 1px rgba(91,155,255,0.06);}
+.s4-why-index{position:relative; z-index:2; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.1em; color:var(--accent-bright); opacity:0.5; transition:opacity .4s ease; align-self:flex-end;}
 .s4-why-card:hover .s4-why-index, .s4-why-card.is-active .s4-why-index{opacity:1;}
-.s4-why-title{position:relative; z-index:2; font-size:1.05rem; font-weight:700; line-height:1.3; color:#fff; margin-top:2px;}
-.s4-why-stat-row{position:relative; z-index:2; display:flex; align-items:baseline; gap:4px; margin-top:16px;}
-.s4-why-stat{font-family:'JetBrains Mono',monospace; font-size:2.4em; font-weight:700; line-height:1; background:linear-gradient(180deg,#fff,rgba(255,255,255,0.35)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
-.s4-why-desc{position:relative; z-index:2; opacity:0; color:#9AA7BD; font-size:12.5px; line-height:1.65; margin-top:10px; max-width:230px; transition:opacity .4s ease .1s;}
+.s4-why-title{position:relative; z-index:2; font-size:1.15rem; font-weight:800; letter-spacing:-0.01em; line-height:1.28; color:#fff; margin-top:4px;}
+.s4-why-stat-row{position:relative; z-index:2; display:flex; align-items:baseline; gap:4px; margin-top:18px;}
+.s4-why-stat{font-family:'JetBrains Mono',monospace; font-size:2.5em; font-weight:700; line-height:1; letter-spacing:-0.01em; background:linear-gradient(180deg,#fff 35%,rgba(255,255,255,0.55)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+.s4-why-desc{position:relative; z-index:2; opacity:0; color:#9AA7BD; font-size:12.5px; line-height:1.7; margin-top:11px; max-width:230px; transition:opacity .4s ease .1s;}
 .s4-why-card:hover .s4-why-desc, .s4-why-card.is-active .s4-why-desc{opacity:1;}
-.s4-why-chart{position:absolute; left:0; right:0; bottom:0; height:46%; opacity:0.55; transition:opacity .5s ease;}
+.s4-why-chart{position:absolute; left:0; right:0; bottom:0; height:46%; opacity:0.6; transition:opacity .5s ease;}
 .s4-why-card:hover .s4-why-chart, .s4-why-card.is-active .s4-why-chart{opacity:1;}
 .s4-why-chart svg{width:100%; height:100%; overflow:visible;}
 
-/* card 1 — smooth line + filled area, pulsing "current" point */
-.s4-chart-area{fill:url(#s4GradArea); opacity:0; transition:opacity 1s ease .2s;}
-.s4-chart-line{fill:none; stroke:var(--accent-bright); stroke-width:2; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; transition:stroke-dashoffset 1.4s var(--ease);}
+/* card 1 — smooth line + filled area, pulsing "current" point. Once drawn in, the whole
+   chart keeps a slow, continuous vertical drift so it never sits perfectly still — reads
+   as "live" the way the reference recording's charts subtly shift even without interaction. */
+.s4-chart-area{fill:url(#s4GradArea); opacity:0; transition:opacity 1s ease .15s;}
+.s4-chart-line{fill:none; stroke:var(--accent-bright); stroke-width:2; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; transition:stroke-dashoffset 1.3s var(--ease);}
 .s4-chart-guide{stroke:rgba(255,255,255,0.18); stroke-width:1; stroke-dasharray:3 3;}
-.s4-chart-dot{fill:#fff; opacity:0; transition:opacity .3s ease .8s;}
+.s4-chart-dot{fill:#fff; opacity:0; transition:opacity .3s ease .7s;}
 .s4-why-chart.is-visible .s4-chart-area{opacity:1;}
 .s4-why-chart.is-visible .s4-chart-line{stroke-dashoffset:0;}
 .s4-why-chart.is-visible .s4-chart-dot{opacity:1;}
-.s4-why-card:hover .s4-chart-dot, .s4-why-card.is-active .s4-chart-dot{animation:s4Pulse 1.6s ease-in-out infinite;}
+.s4-why-chart.is-visible .s4-chart-dot{animation:s4Pulse 2.4s ease-in-out infinite;}
+.s4-why-card:hover .s4-chart-dot, .s4-why-card.is-active .s4-chart-dot{animation-duration:1.4s;}
+.s4-why-chart.is-visible svg{animation:s4Drift 5s ease-in-out infinite;}
 
-/* card 2 — bar chart, staggered grow-in, glints on hover */
+/* card 2 — bar chart: staggered grow-in, then each bar keeps gently breathing at a
+   slightly different pace/phase so the chart reads as live data, not a static image. */
 .s4-chart-bars{position:absolute; inset:0; display:flex; align-items:flex-end; gap:8%; padding:0 2px;}
-.s4-chart-bar{flex:1 1 0%; height:0; border-radius:3px 3px 0 0; background:linear-gradient(180deg, rgba(91,155,255,0.55), rgba(91,155,255,0.05)); box-shadow:inset 0 1px 0 rgba(255,255,255,0.55); transition:height 1s var(--ease);}
-.s4-why-chart.is-visible .s4-chart-bar{height:var(--h);}
-.s4-why-card:hover .s4-chart-bar, .s4-why-card.is-active .s4-chart-bar{background:linear-gradient(180deg, rgba(91,155,255,0.85), rgba(91,155,255,0.1));}
+.s4-chart-bar{flex:1 1 0%; height:0; border-radius:3px 3px 0 0; background:linear-gradient(180deg, rgba(91,155,255,0.6), rgba(91,155,255,0.06)); box-shadow:inset 0 1px 0 rgba(255,255,255,0.6); transition:height 1s var(--ease); transform-origin:bottom center;}
+.s4-why-chart.is-visible .s4-chart-bar{height:var(--h); animation:s4BarBreathe 3.2s ease-in-out infinite;}
+.s4-why-card:hover .s4-chart-bar, .s4-why-card.is-active .s4-chart-bar{background:linear-gradient(180deg, rgba(91,155,255,0.9), rgba(91,155,255,0.12));}
 
 /* card 3 — dashed (predicted) to solid (confirmed) line, tooltip callout */
-.s4-chart-line-dash{fill:none; stroke:rgba(255,255,255,0.4); stroke-width:2; stroke-dasharray:5 5; stroke-linecap:round; opacity:0; transition:opacity .8s ease .3s;}
-.s4-chart-line-solid{fill:none; stroke:var(--accent-bright); stroke-width:2; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; transition:stroke-dashoffset 1s var(--ease) .9s;}
+.s4-chart-line-dash{fill:none; stroke:rgba(255,255,255,0.4); stroke-width:2; stroke-dasharray:5 5; stroke-linecap:round; opacity:0; transition:opacity .8s ease .25s;}
+.s4-chart-line-solid{fill:none; stroke:var(--accent-bright); stroke-width:2; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; transition:stroke-dashoffset 1s var(--ease) .8s;}
 .s4-why-chart.is-visible .s4-chart-line-dash{opacity:1;}
 .s4-why-chart.is-visible .s4-chart-line-solid{stroke-dashoffset:0;}
+.s4-why-chart.is-visible svg{animation:s4Drift 5.5s ease-in-out infinite .3s;}
 .s4-why-tooltip{position:absolute; z-index:3; transform:translate(-50%,-115%) scale(0.9); opacity:0; transition:opacity .3s ease, transform .3s ease; background:rgba(10,18,31,0.92); border:1px solid rgba(91,155,255,0.35); border-radius:8px; padding:6px 10px; font-family:'JetBrains Mono',monospace; white-space:nowrap; backdrop-filter:blur(4px);}
 .s4-why-card:hover .s4-why-tooltip, .s4-why-card.is-active .s4-why-tooltip{opacity:1; transform:translate(-50%,-130%) scale(1);}
 .s4-why-tooltip-date{font-size:9.5px; color:#9AA7BD; letter-spacing:0.05em;}
 .s4-why-tooltip-val{font-size:12px; color:var(--success); font-weight:700;}
 
-@keyframes s4Pulse{0%,100%{r:4; opacity:1;} 50%{r:6.5; opacity:0.6;}}
+@keyframes s4Pulse{0%,100%{r:4; opacity:1;} 50%{r:6.5; opacity:0.55;}}
+@keyframes s4Drift{0%,100%{transform:translateY(0);} 50%{transform:translateY(-4px);}}
+@keyframes s4BarBreathe{0%,100%{transform:scaleY(1);} 50%{transform:scaleY(0.94);}}
 
 @media (max-width:820px){
   .s4-why-row{flex-direction:column; height:auto; gap:16px; perspective:none;}
-  .s4-why-card{flex:none !important; padding:24px; height:280px; transform:none !important;}
+  .s4-why-card{flex:none !important; padding:26px; height:300px; transform:none !important;}
   .s4-why-index, .s4-why-desc, .s4-why-chart{opacity:1; transition:none;}
   .s4-why-tooltip{opacity:1; transform:translate(-50%,-115%) scale(0.9);}
 }
@@ -777,14 +785,14 @@ h2.h-title{font-size:38px; font-weight:800; letter-spacing:-0.01em; max-width:64
         <div class="s4-why-desc">How closely your live trading holds to your own stated rules and risk limits, verified from real account data.</div>
         <div class="s4-why-chart" data-chart>
           <div class="s4-chart-bars">
-            <div class="s4-chart-bar" style="--h:42%; transition-delay:.05s"></div>
-            <div class="s4-chart-bar" style="--h:64%; transition-delay:.1s"></div>
-            <div class="s4-chart-bar" style="--h:52%; transition-delay:.15s"></div>
-            <div class="s4-chart-bar" style="--h:88%; transition-delay:.2s"></div>
-            <div class="s4-chart-bar" style="--h:97%; transition-delay:.25s"></div>
-            <div class="s4-chart-bar" style="--h:70%; transition-delay:.3s"></div>
-            <div class="s4-chart-bar" style="--h:80%; transition-delay:.35s"></div>
-            <div class="s4-chart-bar" style="--h:60%; transition-delay:.4s"></div>
+            <div class="s4-chart-bar" style="--h:42%; transition-delay:.05s; animation-delay:.1s"></div>
+            <div class="s4-chart-bar" style="--h:64%; transition-delay:.1s; animation-delay:.5s"></div>
+            <div class="s4-chart-bar" style="--h:52%; transition-delay:.15s; animation-delay:.0s"></div>
+            <div class="s4-chart-bar" style="--h:88%; transition-delay:.2s; animation-delay:.7s"></div>
+            <div class="s4-chart-bar" style="--h:97%; transition-delay:.25s; animation-delay:.3s"></div>
+            <div class="s4-chart-bar" style="--h:70%; transition-delay:.3s; animation-delay:.9s"></div>
+            <div class="s4-chart-bar" style="--h:80%; transition-delay:.35s; animation-delay:.2s"></div>
+            <div class="s4-chart-bar" style="--h:60%; transition-delay:.4s; animation-delay:.6s"></div>
           </div>
         </div>
       </div>
@@ -815,12 +823,12 @@ h2.h-title{font-size:38px; font-weight:800; letter-spacing:-0.01em; max-width:64
 (function(){
   const cards = document.querySelectorAll('[data-why-card]');
 
-  // charts draw themselves in once, the first time each card scrolls into view
+  // charts draw themselves in every time a card scrolls into view, and reset when it
+  // scrolls out — so scrolling past a card and back triggers the reveal again instead
+  // of only ever playing once.
   const chartObs = new IntersectionObserver((entries)=>{
     entries.forEach(e=>{
-      if(!e.isIntersecting) return;
-      e.target.classList.add('is-visible');
-      chartObs.unobserve(e.target);
+      e.target.classList.toggle('is-visible', e.isIntersecting);
     });
   }, {threshold:0.35});
   document.querySelectorAll('[data-chart]').forEach(el=>chartObs.observe(el));
