@@ -174,7 +174,7 @@ button{font-family:inherit; cursor:pointer;}
 
         <div class="auth-social">
           <button type="button" class="auth-social-btn" id="googleLoginBtn"><span class="auth-social-badge google">G</span>Continue with Google</button>
-          <button type="button" class="auth-social-btn"><span class="auth-social-badge">&#63743;</span>Continue with Apple</button>
+          <button type="button" class="auth-social-btn" id="appleLoginBtn"><span class="auth-social-badge">&#63743;</span>Continue with Apple</button>
         </div>
         <div class="auth-divider">or log in with email</div>
 
@@ -207,7 +207,7 @@ button{font-family:inherit; cursor:pointer;}
 
         <div class="auth-social">
           <button type="button" class="auth-social-btn" id="googleSignupBtn"><span class="auth-social-badge google">G</span>Sign up with Google</button>
-          <button type="button" class="auth-social-btn"><span class="auth-social-badge">&#63743;</span>Sign up with Apple</button>
+          <button type="button" class="auth-social-btn" id="appleSignupBtn"><span class="auth-social-badge">&#63743;</span>Sign up with Apple</button>
         </div>
         <div class="auth-divider">or sign up with email</div>
 
@@ -248,14 +248,52 @@ button{font-family:inherit; cursor:pointer;}
       <div class="auth-view" data-auth-view="forgot">
         <button type="button" class="auth-back" data-auth-tab="login"><svg class="icon"><use href="#i-chev-left"/></svg>Back to log in</button>
         <div class="auth-title">Reset your password.</div>
-        <p class="auth-subtitle">Enter the email on your account and we'll send a link to reset your password.</p>
+        <p class="auth-subtitle">Enter the email on your account and we'll send you a verification code.</p>
         <form id="forgotForm" novalidate>
           <div class="auth-field">
             <label class="auth-label" for="forgotEmail">Email address</label>
             <input class="auth-input" type="email" id="forgotEmail" placeholder="you@example.com" required autocomplete="email">
           </div>
           <div class="auth-error" id="forgotError">Please enter a valid email address.</div>
-          <button type="submit" class="btn btn-primary glass-btn-3d magnetic auth-submit">Send Reset Link</button>
+          <button type="submit" class="btn btn-primary glass-btn-3d magnetic auth-submit">Send Verification Code</button>
+        </form>
+      </div>
+
+      <!-- VERIFY EMAIL CODE (sign-up) -->
+      <div class="auth-view" data-auth-view="verify">
+        <button type="button" class="auth-back" data-auth-tab="signup"><svg class="icon"><use href="#i-chev-left"/></svg>Back</button>
+        <div class="auth-title">Check your email.</div>
+        <p class="auth-subtitle" id="verifySubtitle">Enter the 6-digit code we just sent to your email address.</p>
+        <form id="verifyForm" novalidate>
+          <div class="auth-field">
+            <label class="auth-label" for="verifyCode">Verification code</label>
+            <input class="auth-input mono" type="text" id="verifyCode" placeholder="123456" required inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" style="letter-spacing:0.3em; text-align:center; font-size:20px;">
+          </div>
+          <div class="auth-error" id="verifyError">That code isn't right. Check your email and try again.</div>
+          <button type="submit" class="btn btn-primary glass-btn-3d magnetic auth-submit">Verify &amp; Continue</button>
+        </form>
+        <div class="auth-switch">Didn't get a code? <button type="button" class="auth-link" id="resendCodeBtn">Resend</button></div>
+      </div>
+
+      <!-- RESET PASSWORD (code + new password) -->
+      <div class="auth-view" data-auth-view="reset">
+        <button type="button" class="auth-back" data-auth-tab="forgot"><svg class="icon"><use href="#i-chev-left"/></svg>Back</button>
+        <div class="auth-title">Set a new password.</div>
+        <p class="auth-subtitle">Enter the code we emailed you and choose a new password.</p>
+        <form id="resetForm" novalidate>
+          <div class="auth-field">
+            <label class="auth-label" for="resetCode">Verification code</label>
+            <input class="auth-input mono" type="text" id="resetCode" placeholder="123456" required inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" style="letter-spacing:0.3em; text-align:center; font-size:20px;">
+          </div>
+          <div class="auth-field">
+            <label class="auth-label" for="resetPassword">New password</label>
+            <div class="auth-password-wrap">
+              <input class="auth-input" type="password" id="resetPassword" placeholder="At least 8 characters" required minlength="8" autocomplete="new-password">
+              <button type="button" class="auth-toggle-pw" data-toggle-for="resetPassword" aria-label="Show password"><svg class="icon"><use href="#i-eye"/></svg></button>
+            </div>
+          </div>
+          <div class="auth-error" id="resetError">Please check the code and password, then try again.</div>
+          <button type="submit" class="btn btn-primary glass-btn-3d magnetic auth-submit">Reset Password</button>
         </form>
       </div>
 
@@ -273,8 +311,14 @@ button{font-family:inherit; cursor:pointer;}
   <p class="auth-footnote">By continuing you agree to SOLVEN4's <a href="solven4-terms-of-service.html">Terms of Service</a> and <a href="solven4-privacy-policy.html">Privacy Policy</a>. Need help? Visit the <a href="solven4-help-center.html">Help Center</a>.</p>
 </div>
 
+<!-- Clerk handles real Google/Apple OAuth + email-code verification client-side —
+     no backend needed for a static site. Swap in the real key from the Clerk
+     dashboard (API Keys → Publishable key) before this goes live. -->
+<script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js" crossorigin="anonymous"></script>
 <script>
 (function(){
+  const CLERK_PUBLISHABLE_KEY = 'pk_REPLACE_WITH_REAL_CLERK_KEY';
+
   const shell = document.querySelector('.auth-shell');
   const views = Array.from(shell.querySelectorAll('.auth-view'));
   const tabs = Array.from(shell.querySelectorAll('.auth-tab'));
@@ -285,7 +329,7 @@ button{font-family:inherit; cursor:pointer;}
     const firstInput = shell.querySelector('.auth-view.is-active input');
     if(firstInput) setTimeout(()=> firstInput.focus(), 50);
     const url = new URL(window.location);
-    url.searchParams.set('mode', name === 'success' ? (url.searchParams.get('mode') || 'login') : name);
+    url.searchParams.set('mode', ['success','verify','reset'].includes(name) ? (url.searchParams.get('mode') || 'login') : name);
     window.history.replaceState({}, '', url);
   }
 
@@ -316,46 +360,190 @@ button{font-family:inherit; cursor:pointer;}
     setView('success');
   }
 
-  document.getElementById('loginForm').addEventListener('submit', e=>{
+  function clerkErrorMessage(err, fallback){
+    return (err && err.errors && err.errors[0] && (err.errors[0].longMessage || err.errors[0].message)) || fallback;
+  }
+
+  function showFieldError(id, message){
+    const el = document.getElementById(id);
+    if(message) el.textContent = message;
+    el.style.display = 'block';
+  }
+  function hideFieldError(id){ document.getElementById(id).style.display = 'none'; }
+
+  // ---- Clerk setup ----
+  let clerk = null;
+  let clerkReady = false;
+  let pendingSignUp = null;   // in-flight SignUp resource, used by the verify-code step
+  let pendingSignIn = null;   // in-flight SignIn resource, used by the reset-password step
+  let verifyMode = 'signup';  // 'signup' | (reserved for future re-verification flows)
+
+  function notConfigured(){
+    return !CLERK_PUBLISHABLE_KEY || CLERK_PUBLISHABLE_KEY.indexOf('REPLACE') !== -1;
+  }
+
+  async function initClerk(){
+    if(notConfigured() || !window.Clerk){
+      console.warn('SOLVEN4 auth: Clerk publishable key not configured yet — sign-in/sign-up is disabled until it is.');
+      return;
+    }
+    try{
+      clerk = new window.Clerk(CLERK_PUBLISHABLE_KEY);
+      await clerk.load();
+      clerkReady = true;
+      if(clerk.user){
+        // already signed in (e.g. returning here after a completed OAuth redirect)
+        window.location.replace('index.html');
+      }
+    }catch(err){
+      console.error('SOLVEN4 auth: Clerk failed to load.', err);
+    }
+  }
+  const clerkInit = initClerk();
+
+  async function ensureClerk(errorFieldId){
+    if(clerkReady) return true;
+    await clerkInit;
+    if(clerkReady) return true;
+    showFieldError(errorFieldId, 'Sign-in is temporarily unavailable — please try again shortly.');
+    return false;
+  }
+
+  // ---- Log in (email + password) ----
+  document.getElementById('loginForm').addEventListener('submit', async e=>{
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
     const pw = document.getElementById('loginPassword').value;
-    const err = document.getElementById('loginError');
-    const ok = /\S+@\S+\.\S+/.test(email) && pw.length >= 1;
-    err.style.display = ok ? 'none' : 'block';
-    if(!ok) return;
-    showSuccess('Welcome back.', 'This is a preview environment, so no real session was created — but the log-in flow works exactly as it will once connected to SOLVEN4\'s live platform.');
+    const localOk = /\S+@\S+\.\S+/.test(email) && pw.length >= 1;
+    if(!localOk){ showFieldError('loginError', 'Please enter a valid email and password.'); return; }
+    hideFieldError('loginError');
+    if(!(await ensureClerk('loginError'))) return;
+    try{
+      const result = await clerk.client.signIn.create({ identifier: email, password: pw });
+      if(result.status === 'complete'){
+        await clerk.setActive({ session: result.createdSessionId });
+        showSuccess('Welcome back.', 'Redirecting you into SOLVEN4…');
+        setTimeout(()=> window.location.href = 'index.html', 1100);
+      } else {
+        showFieldError('loginError', 'Additional verification is required to finish logging in.');
+      }
+    }catch(err){
+      showFieldError('loginError', clerkErrorMessage(err, 'That email and password don\'t match an account.'));
+    }
   });
 
-  document.getElementById('signupForm').addEventListener('submit', e=>{
+  // ---- Sign up (email + password, then email verification code) ----
+  document.getElementById('signupForm').addEventListener('submit', async e=>{
     e.preventDefault();
     const name = document.getElementById('signupName').value.trim();
     const email = document.getElementById('signupEmail').value.trim();
     const pw = document.getElementById('signupPassword').value;
     const pw2 = document.getElementById('signupPassword2').value;
     const terms = document.getElementById('signupTerms').checked;
-    const err = document.getElementById('signupError');
-    const ok = name.length > 1 && /\S+@\S+\.\S+/.test(email) && pw.length >= 8 && pw === pw2 && terms;
-    err.style.display = ok ? 'none' : 'block';
-    if(!ok) return;
-    showSuccess('You\'re all set, ' + name.split(' ')[0] + '.', 'This is a preview environment, so no real account was created — but the sign-up flow works exactly as it will once connected to SOLVEN4\'s live platform.');
+    const localOk = name.length > 1 && /\S+@\S+\.\S+/.test(email) && pw.length >= 8 && pw === pw2 && terms;
+    if(!localOk){ showFieldError('signupError', 'Please complete all fields correctly and accept the terms.'); return; }
+    hideFieldError('signupError');
+    if(!(await ensureClerk('signupError'))) return;
+    try{
+      const nameParts = name.split(' ');
+      pendingSignUp = await clerk.client.signUp.create({
+        emailAddress: email,
+        password: pw,
+        firstName: nameParts[0],
+        lastName: nameParts.slice(1).join(' ') || undefined
+      });
+      await pendingSignUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+      verifyMode = 'signup';
+      document.getElementById('verifySubtitle').textContent = 'Enter the 6-digit code we just sent to ' + email + '.';
+      hideFieldError('verifyError');
+      setView('verify');
+    }catch(err){
+      showFieldError('signupError', clerkErrorMessage(err, 'Couldn\'t create that account — please check your details and try again.'));
+    }
   });
 
-  document.getElementById('forgotForm').addEventListener('submit', e=>{
+  // ---- Verify email code (completes sign-up) ----
+  document.getElementById('verifyForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const code = document.getElementById('verifyCode').value.trim();
+    if(!clerkReady || !pendingSignUp){ showFieldError('verifyError', 'Session expired — please sign up again.'); return; }
+    try{
+      const result = await pendingSignUp.attemptEmailAddressVerification({ code });
+      if(result.status === 'complete'){
+        await clerk.setActive({ session: result.createdSessionId });
+        showSuccess('You\'re all set.', 'Your SOLVEN4 account is ready — redirecting you now.');
+        setTimeout(()=> window.location.href = 'index.html', 1200);
+      } else {
+        showFieldError('verifyError', 'That code isn\'t right. Check your email and try again.');
+      }
+    }catch(err){
+      showFieldError('verifyError', clerkErrorMessage(err, 'That code isn\'t right. Check your email and try again.'));
+    }
+  });
+
+  document.getElementById('resendCodeBtn').addEventListener('click', async ()=>{
+    if(!clerkReady) return;
+    try{
+      if(verifyMode === 'signup' && pendingSignUp) await pendingSignUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+      hideFieldError('verifyError');
+    }catch(err){
+      showFieldError('verifyError', clerkErrorMessage(err, 'Couldn\'t resend the code — please try again.'));
+    }
+  });
+
+  // ---- Forgot password → email code → reset ----
+  document.getElementById('forgotForm').addEventListener('submit', async e=>{
     e.preventDefault();
     const email = document.getElementById('forgotEmail').value.trim();
-    const err = document.getElementById('forgotError');
-    const ok = /\S+@\S+\.\S+/.test(email);
-    err.style.display = ok ? 'none' : 'block';
-    if(!ok) return;
-    showSuccess('Check your email.', 'If an account exists for that address, a reset link would be sent — no real email was sent in this preview environment.');
+    if(!/\S+@\S+\.\S+/.test(email)){ showFieldError('forgotError', 'Please enter a valid email address.'); return; }
+    hideFieldError('forgotError');
+    if(!(await ensureClerk('forgotError'))) return;
+    try{
+      pendingSignIn = await clerk.client.signIn.create({ strategy: 'reset_password_email_code', identifier: email });
+      hideFieldError('resetError');
+      setView('reset');
+    }catch(err){
+      showFieldError('forgotError', clerkErrorMessage(err, 'Couldn\'t find an account with that email.'));
+    }
   });
 
-  // Google continue buttons: preview-only stand-in for real OAuth
-  ['googleLoginBtn','googleSignupBtn'].forEach(id=>{
-    const btn = document.getElementById(id);
-    if(btn) btn.addEventListener('click', ()=> showSuccess('Continuing with Google.', 'This is a preview environment, so no real Google session was created — once connected to SOLVEN4\'s live platform this will complete Google Sign-In.'));
+  document.getElementById('resetForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const code = document.getElementById('resetCode').value.trim();
+    const newPw = document.getElementById('resetPassword').value;
+    if(!clerkReady || !pendingSignIn){ showFieldError('resetError', 'Session expired — please request a new code.'); return; }
+    if(newPw.length < 8){ showFieldError('resetError', 'Password must be at least 8 characters.'); return; }
+    try{
+      const result = await pendingSignIn.attemptFirstFactor({ strategy: 'reset_password_email_code', code, password: newPw });
+      if(result.status === 'complete'){
+        await clerk.setActive({ session: result.createdSessionId });
+        showSuccess('Password updated.', 'You\'re logged in — redirecting you now.');
+        setTimeout(()=> window.location.href = 'index.html', 1200);
+      } else {
+        showFieldError('resetError', 'Please check the code and password, then try again.');
+      }
+    }catch(err){
+      showFieldError('resetError', clerkErrorMessage(err, 'Please check the code and password, then try again.'));
+    }
   });
+
+  // ---- Google / Apple OAuth ----
+  async function oauthRedirect(strategy, errorFieldId){
+    if(!(await ensureClerk(errorFieldId))) return;
+    try{
+      await clerk.client.signIn.authenticateWithRedirect({
+        strategy,
+        redirectUrl: window.location.origin + '/auth.html',
+        redirectUrlComplete: window.location.origin + '/index.html'
+      });
+    }catch(err){
+      showFieldError(errorFieldId, clerkErrorMessage(err, 'That sign-in method is unavailable right now.'));
+    }
+  }
+  document.getElementById('googleLoginBtn').addEventListener('click', ()=> oauthRedirect('oauth_google', 'loginError'));
+  document.getElementById('googleSignupBtn').addEventListener('click', ()=> oauthRedirect('oauth_google', 'signupError'));
+  document.getElementById('appleLoginBtn').addEventListener('click', ()=> oauthRedirect('oauth_apple', 'loginError'));
+  document.getElementById('appleSignupBtn').addEventListener('click', ()=> oauthRedirect('oauth_apple', 'signupError'));
 })();
 </script>
 
