@@ -372,6 +372,22 @@ button{font-family:inherit; cursor:pointer;}
   }
   function hideFieldError(id){ document.getElementById(id).style.display = 'none'; }
 
+  // once logged in/signed up here, hand the session to HUB the same way HUB
+  // hands sessions to the EDGE/FORGE/NEXUS/ORACLE doors (s4_at/s4_rt query
+  // params) — HUB reads these on load and calls auth.setSession() with them,
+  // so the visitor lands there already signed in instead of hitting its login.
+  const HUB_URL = 'https://solven4-hub.vercel.app/dashboard';
+  function goToHub(session){
+    if(session && session.access_token && session.refresh_token){
+      const url = new URL(HUB_URL);
+      url.searchParams.set('s4_at', session.access_token);
+      url.searchParams.set('s4_rt', session.refresh_token);
+      window.location.href = url.toString();
+    } else {
+      window.location.href = HUB_URL;
+    }
+  }
+
   // ---- Supabase setup ----
   let sb = null;
   let sbReady = false;
@@ -397,9 +413,9 @@ button{font-family:inherit; cursor:pointer;}
       // OAuth redirects and an already-open session are handled by getSession().
       const codeParam = new URLSearchParams(window.location.search).get('code');
       if(codeParam){
-        const { error } = await sb.auth.exchangeCodeForSession(window.location.href);
+        const { data, error } = await sb.auth.exchangeCodeForSession(window.location.href);
         if(!error){
-          window.location.replace('index.html');
+          goToHub(data.session);
           return;
         }
       }
@@ -407,7 +423,7 @@ button{font-family:inherit; cursor:pointer;}
       const { data: { session } } = await sb.auth.getSession();
       if(session){
         // already signed in (e.g. returning here after a completed OAuth redirect)
-        window.location.replace('index.html');
+        goToHub(session);
       }
     }catch(err){
       console.error('SOLVEN4 auth: Supabase failed to initialize.', err);
@@ -433,10 +449,10 @@ button{font-family:inherit; cursor:pointer;}
     hideFieldError('loginError');
     if(!(await ensureSupabase('loginError'))) return;
     try{
-      const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
       if(error) throw error;
       showSuccess('Welcome back.', 'Redirecting you into SOLVEN4…');
-      setTimeout(()=> window.location.href = 'index.html', 1100);
+      setTimeout(()=> goToHub(data.session), 1100);
     }catch(err){
       showFieldError('loginError', supabaseErrorMessage(err, 'That email and password don\'t match an account.'));
     }
@@ -470,7 +486,7 @@ button{font-family:inherit; cursor:pointer;}
       if(data.session){
         // project has "confirm email" turned off — already signed in, no code needed
         showSuccess('You\'re all set, ' + name.split(' ')[0] + '.', 'Your SOLVEN4 account is ready — redirecting you now.');
-        setTimeout(()=> window.location.href = 'index.html', 1200);
+        setTimeout(()=> goToHub(data.session), 1200);
         return;
       }
       pendingSignupEmail = email;
@@ -488,10 +504,10 @@ button{font-family:inherit; cursor:pointer;}
     const code = document.getElementById('verifyCode').value.trim();
     if(!sbReady || !pendingSignupEmail){ showFieldError('verifyError', 'Session expired — please sign up again.'); return; }
     try{
-      const { error } = await sb.auth.verifyOtp({ email: pendingSignupEmail, token: code, type: 'signup' });
+      const { data, error } = await sb.auth.verifyOtp({ email: pendingSignupEmail, token: code, type: 'signup' });
       if(error) throw error;
       showSuccess('You\'re all set.', 'Your SOLVEN4 account is ready — redirecting you now.');
-      setTimeout(()=> window.location.href = 'index.html', 1200);
+      setTimeout(()=> goToHub(data.session), 1200);
     }catch(err){
       showFieldError('verifyError', supabaseErrorMessage(err, 'That code isn\'t right. Check your email and try again.'));
     }
@@ -535,12 +551,12 @@ button{font-family:inherit; cursor:pointer;}
     if(!sbReady || !pendingResetEmail){ showFieldError('resetError', 'Session expired — please request a new code.'); return; }
     if(newPw.length < 8){ showFieldError('resetError', 'Password must be at least 8 characters.'); return; }
     try{
-      const { error: verifyError } = await sb.auth.verifyOtp({ email: pendingResetEmail, token: code, type: 'recovery' });
+      const { data: verifyData, error: verifyError } = await sb.auth.verifyOtp({ email: pendingResetEmail, token: code, type: 'recovery' });
       if(verifyError) throw verifyError;
       const { error: updateError } = await sb.auth.updateUser({ password: newPw });
       if(updateError) throw updateError;
       showSuccess('Password updated.', 'You\'re logged in — redirecting you now.');
-      setTimeout(()=> window.location.href = 'index.html', 1200);
+      setTimeout(()=> goToHub(verifyData.session), 1200);
     }catch(err){
       showFieldError('resetError', supabaseErrorMessage(err, 'Please check the code and password, then try again.'));
     }
