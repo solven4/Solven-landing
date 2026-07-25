@@ -94,7 +94,6 @@ window.SOLVEN4_DICT = {
       "SOLVEN4 — AI Financial Ecosystem for Traders, Brokers, Agents & Learners": "سولفن4 — النظام المالي الذكي للمتداولين والوسطاء والوكلاء والمتعلمين",
       "AI Financial Ecosystem Operating System": "نظام تشغيل مالي ذكي متكامل",
       "Your Trading": "تداولك",
-      "Edge": "المتقدّم",
       "One login. Four divisions. A single AI-driven operating system for traders, brokers, agents and learners — unified as SOLVEN4.": "تسجيل دخول واحد. أربعة أقسام. نظام تشغيل ذكي واحد للمتداولين والوسطاء والوكلاء والمتعلمين — موحّد تحت مظلة سولفن4.",
       "CPA-style verification": "تحقق بمعايير محاسبية",
       "Bank-grade encryption": "تشفير بمستوى مصرفي",

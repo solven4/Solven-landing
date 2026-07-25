@@ -367,7 +367,7 @@ h2.h-title{font-size:38px; font-weight:800; letter-spacing:-0.01em; max-width:64
   <div class="hero-video-overlay"></div>
   <div class="wrap">
     <div class="kicker" style="justify-content:center; display:flex;">AI Financial Ecosystem Operating System</div>
-    <h1 id="heroHeadline" style="font-size:64px; font-weight:600; letter-spacing:-0.02em; line-height:1.06; max-width:880px; margin:0 auto;">Your Trading <span id="heroRotateWord" style="color:var(--accent-bright); display:inline-block; transition:opacity .4s ease, transform .4s ease;">Edge</span>.</h1>
+    <h1 id="heroHeadline" style="font-size:64px; font-weight:600; letter-spacing:-0.02em; line-height:1.06; max-width:880px; margin:0 auto;"><span id="heroLead">Your Trading</span> <span id="heroRotateWord" style="color:var(--accent-bright); display:inline-block; transition:opacity .4s ease, transform .4s ease;">Edge</span>.</h1>
     <p class="lede" style="margin:22px auto 0; max-width:560px; text-align:center;">One login. Four divisions. A single AI-driven operating system for traders, brokers, agents and learners — unified as SOLVEN4.</p>
     <div style="display:flex; gap:16px; justify-content:center; margin-top:34px;">
       <a href="auth.html?mode=login" class="btn btn-primary glass-btn-3d magnetic"><svg class="icon" style="stroke:#fff; width:16px; height:16px;"><use href="#i-route"/></svg>Launch App</a>
@@ -1059,19 +1059,35 @@ document.querySelectorAll('a[href="#"]').forEach(a=>{
   a.addEventListener('click', e=> e.preventDefault());
 });
 
-// ---- hero headline: rotating last word ("Your Trading ___.") cycles through the positioning words in electric blue, one sentence delivering five messages. Static under prefers-reduced-motion. ----
+// ---- hero headline: rotating last word ("Your Trading ___." / "تداولك ___.") cycles through
+// the positioning words in electric blue, one sentence delivering five messages. Re-reads its
+// word list on every language change rather than translating the rendered word directly, since
+// the English and Arabic headlines use different grammatical structures (noun list vs.
+// adjectives agreeing with "تداولك"), not a 1:1 word mapping. Static under prefers-reduced-motion. ----
 (function(){
   const el = document.getElementById('heroRotateWord');
-  if(!el) return;
+  const lead = document.getElementById('heroLead');
+  if(!el || !lead) return;
   if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const words = ['Edge', 'Intelligence', 'Network', 'Engine', 'Evolution'];
+  const WORDS = {
+    en: ['Edge', 'Intelligence', 'Network', 'Engine', 'Evolution'],
+    ar: ['المتفوّق', 'الذكي', 'المتصل', 'الفعّال', 'المتطوّر']
+  };
+  const LEAD = { en: 'Your Trading', ar: 'تداولك' };
   let i = 0;
+  function currentLang(){ return (window.SOLVEN4_LANG === 'ar') ? 'ar' : 'en'; }
+  function render(){
+    lead.textContent = LEAD[currentLang()];
+    el.textContent = WORDS[currentLang()][i % WORDS[currentLang()].length];
+  }
+  render();
+  document.addEventListener('solven4:langchange', render);
   setInterval(()=>{
     el.style.opacity = '0';
     el.style.transform = 'translateY(8px)';
     setTimeout(()=>{
-      i = (i + 1) % words.length;
-      el.textContent = words[i];
+      i = (i + 1) % WORDS[currentLang()].length;
+      el.textContent = WORDS[currentLang()][i];
       el.style.opacity = '1';
       el.style.transform = 'translateY(0)';
     }, 380);
@@ -1099,9 +1115,18 @@ function mq(){
   hamburger.style.display = show ? 'flex' : 'none';
 }
 window.addEventListener('resize', mq); mq();
-hamburger.addEventListener('click', ()=> mobileMenu.style.display='flex');
-closeMenu.addEventListener('click', ()=> mobileMenu.style.display='none');
-mobileMenu.querySelectorAll('a').forEach(a=>a.addEventListener('click', ()=> mobileMenu.style.display='none'));
+function setHamburgerIcon(isOpen){
+  const use = hamburger.querySelector('use');
+  if(use) use.setAttribute('href', isOpen ? '#i-close' : '#i-menu');
+  hamburger.setAttribute('aria-label', isOpen ? 'Close menu' : 'Menu');
+}
+hamburger.addEventListener('click', ()=>{
+  const isOpen = mobileMenu.style.display === 'flex';
+  mobileMenu.style.display = isOpen ? 'none' : 'flex';
+  setHamburgerIcon(!isOpen);
+});
+closeMenu.addEventListener('click', ()=>{ mobileMenu.style.display='none'; setHamburgerIcon(false); });
+mobileMenu.querySelectorAll('a').forEach(a=>a.addEventListener('click', ()=>{ mobileMenu.style.display='none'; setHamburgerIcon(false); }));
 
 // ---- count-up figures + gentle live ticking afterward ----
 function countUp(el, target, prefix, suffix, cb){
@@ -1555,6 +1580,7 @@ document.getElementById('cookieReject').addEventListener('click', ()=>{ localSto
 </script>
 
 <script src="lang/dictionary.js"></script>
+<script src="lang/dictionary-divisions.js"></script>
 <script src="lang/i18n.js"></script>
 
 </body>

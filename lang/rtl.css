@@ -47,16 +47,26 @@ html[dir="rtl"] .auth-toggle-pw { right: auto !important; left: 6px !important; 
 /* footer */
 html[dir="rtl"] footer[class*="section-dark"] { direction: rtl; }
 
-/* language toggle button */
+/* language toggle button — contrast is set explicitly per context rather than relying on
+   `color: inherit`, because #siteHeader's background is dark on 2 pages (index.html,
+   auth.html) and light on the other 115; a single inherited color can't be right for both.
+   i18n.js measures the header's actual background luminance at runtime and adds
+   .header-is-dark-bg / .header-is-light-bg so this works regardless of how any given
+   page's header is styled, present or future. #mobileMenu is always a light overlay
+   regardless of page theme, so its toggle always uses the dark-text style. */
 .lang-toggle {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 40px; height: 40px; padding: 0 10px; border-radius: 999px;
   font-weight: 800; font-size: 12.5px; letter-spacing: 0.02em; cursor: pointer;
-  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.2);
-  color: inherit; transition: background .2s ease;
+  transition: background .2s ease;
+  color: var(--ink); background: rgba(2,2,2,0.05); border: 1px solid var(--line);
 }
-.lang-toggle:hover { background: rgba(255,255,255,0.14); }
-#siteHeader .lang-toggle { color: var(--ink); border-color: var(--line); background: rgba(2,2,2,0.04); }
+.lang-toggle:hover { background: rgba(2,2,2,0.1); }
+#siteHeader.header-is-dark-bg .lang-toggle {
+  color: #fff; background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2);
+}
+#siteHeader.header-is-dark-bg .lang-toggle:hover { background: rgba(255,255,255,0.14); }
+#mobileMenu .lang-toggle { color: var(--ink); background: rgba(2,2,2,0.05); border-color: var(--line); }
 #siteHeader .lang-toggle:hover { background: rgba(2,2,2,0.08); }
 
 @media (max-width: 900px) {

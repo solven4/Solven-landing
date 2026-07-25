@@ -128,10 +128,26 @@
     }
   }
 
+  // The header background is dark on 2 pages (index.html, auth.html) and light on the
+  // other 115. Rather than hardcoding that split, measure the header's actual rendered
+  // background color and tag it — so the "AR" toggle (and anything else that needs to
+  // know) always picks a readable color, even if a page's header styling changes later.
+  function markHeaderContrast() {
+    var header = document.getElementById('siteHeader');
+    if (!header) return;
+    var bg = getComputedStyle(header).backgroundColor;
+    var m = bg.match(/[\d.]+/g);
+    if (!m || m.length < 3) return;
+    var luminance = 0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2];
+    header.classList.toggle('header-is-dark-bg', luminance <= 150);
+    header.classList.toggle('header-is-light-bg', luminance > 150);
+  }
+
   window.SOLVEN4_setLanguage = applyLanguage;
 
   document.addEventListener('DOMContentLoaded', function () {
     injectToggleButtons();
+    markHeaderContrast();
     var saved = currentLang();
     if (saved === 'ar') applyLanguage('ar', false);
   });

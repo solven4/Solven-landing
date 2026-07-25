@@ -369,9 +369,18 @@ function mq(){
   hamburger.style.display = show ? 'flex' : 'none';
 }
 window.addEventListener('resize', mq); mq();
-hamburger.addEventListener('click', ()=> mobileMenu.style.display='flex');
-closeMenu.addEventListener('click', ()=> mobileMenu.style.display='none');
-mobileMenu.querySelectorAll('a').forEach(a=>a.addEventListener('click', ()=> mobileMenu.style.display='none'));
+function setHamburgerIcon(isOpen){
+  const use = hamburger.querySelector('use');
+  if(use) use.setAttribute('href', isOpen ? '#i-close' : '#i-menu');
+  hamburger.setAttribute('aria-label', isOpen ? 'Close menu' : 'Menu');
+}
+hamburger.addEventListener('click', ()=>{
+  const isOpen = mobileMenu.style.display === 'flex';
+  mobileMenu.style.display = isOpen ? 'none' : 'flex';
+  setHamburgerIcon(!isOpen);
+});
+closeMenu.addEventListener('click', ()=>{ mobileMenu.style.display='none'; setHamburgerIcon(false); });
+mobileMenu.querySelectorAll('a').forEach(a=>a.addEventListener('click', ()=>{ mobileMenu.style.display='none'; setHamburgerIcon(false); }));
 
 document.querySelectorAll('.reveal').forEach(el=>{
   const dir = el.dataset.reveal || 'up';
@@ -432,6 +441,7 @@ document.getElementById('cookieReject').addEventListener('click', ()=>{ localSto
 })();
 </script>
 <script src="lang/dictionary.js"></script>
+<script src="lang/dictionary-divisions.js"></script>
 <script src="lang/i18n.js"></script>
 </body>
 </html>

@@ -19,6 +19,14 @@ img, video { max-width: 100%; }
    colors (higher specificity), so they're unaffected by this rule. ---------- */
 #siteHeader { color: var(--ink); }
 
+/* ---------- mobile menu drawer contrast fix ----------
+   Same root cause as the header: #mobileMenu is a light/white overlay
+   (rgba(255,255,255,0.97)) that sets no color of its own, so on the 111
+   pages with a dark <body> it inherited white text and an invisible close
+   (X) icon. It's always a light drawer regardless of page theme, so it
+   always needs dark text/icon color. ---------- */
+#mobileMenu { color: var(--ink); }
+
 /* ---------- header "Launch App" button becomes an icon-only circular button ----------
    The label is a raw text node (not wrapped in a span), so it's hidden by zeroing the
    anchor's own font-size; the svg icon keeps its explicit pixel width/height and stays
