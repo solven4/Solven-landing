@@ -377,15 +377,19 @@ button{font-family:inherit; cursor:pointer;}
   // params) — HUB reads these on load and calls auth.setSession() with them,
   // so the visitor lands there already signed in instead of hitting its login.
   const HUB_URL = 'https://solven4-hub.vercel.app/dashboard';
+  // HUB forwards visitors here for a specific door (EDGE/FORGE/etc.) as
+  // ?redirect=<door-url> — carry that straight through so HUB can finish
+  // bridging them to the door once it sees the session, instead of just
+  // dropping them on its own dashboard.
   function goToHub(session){
+    const doorRedirect = new URLSearchParams(window.location.search).get('redirect');
+    const url = new URL(HUB_URL);
     if(session && session.access_token && session.refresh_token){
-      const url = new URL(HUB_URL);
       url.searchParams.set('s4_at', session.access_token);
       url.searchParams.set('s4_rt', session.refresh_token);
-      window.location.href = url.toString();
-    } else {
-      window.location.href = HUB_URL;
     }
+    if(doorRedirect) url.searchParams.set('redirect', doorRedirect);
+    window.location.href = url.toString();
   }
 
   // ---- Supabase setup ----
