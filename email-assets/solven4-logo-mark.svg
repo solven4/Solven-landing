@@ -1,0 +1,27 @@
+<svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="markGrad" cx="32%" cy="28%" r="80%">
+      <stop offset="0%" stop-color="#2a3542"/>
+      <stop offset="55%" stop-color="#0a0d12"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <filter id="barGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="ringGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+
+  <circle cx="120" cy="120" r="92" fill="#5B9BFF" opacity="0.35" filter="url(#ringGlow)"/>
+  <circle cx="120" cy="120" r="80" fill="url(#markGrad)"/>
+
+  <g filter="url(#barGlow)">
+    <rect x="112" y="55" width="16" height="130" rx="4" fill="#5B9BFF"/>
+    <rect x="55" y="112" width="130" height="16" rx="4" fill="#5B9BFF"/>
+  </g>
+</svg>
